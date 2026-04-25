@@ -10,6 +10,7 @@ A [MelonLoader](https://github.com/LavaGang/MelonLoader) mod for **Little Nightm
 
 - **Hood occlusion "None"** — adds a fully-hidden state to the existing *Accessibility → Hood occlusions* option. The mod relabels the narrower of the two built-in choices as **"None"** and, when selected, disables the `HoodMesh` that's parented to the VR camera so the top-left of your view isn't covered by a hood silhouette.
 - **Smooth turning by default** — pushes `Controls.RotationSnap = false` into the game's native save on startup so the *Controls* menu toggle reflects smooth turning out of the box. The mod also directly enforces `BNG.PlayerRotation.RotationType = Smooth` every ~0.2s so the player controller can't drift back to snap turning on chapter/respawn events.
+- **Cranked graphics** *(v1.1)* — enables supersampling, MSAA, longer shadow draw distance, 4096 main-light shadowmap, anisotropic filtering, soft particles, and higher LOD bias by overriding the URP asset, Unity QualitySettings, and XR settings at runtime. Disabled with one config flag if you want stock visuals.
 - **Configurable smooth-turn speed and snap amount** — tweak speed and snap-step degrees via the config file.
 - **Uses the game's own menu** — changes you make in-game at *Pause → Accessibility* or *Pause → Controls* take precedence until next launch. The mod re-pushes its defaults on each game start, so you always have a predictable baseline.
 
@@ -60,6 +61,53 @@ SnapTurnAmount = 45.0
 # If true and the user hasn't otherwise chosen in the Accessibility menu yet, hide the hood.
 # Once the user picks "None" or "Standard" in-menu, that choice takes over.
 HideHoodByDefault = true
+
+[LNVR_Tweaks_Graphics]
+# Master switch. Set to false to leave the game's stock graphics settings alone.
+Enabled = true
+
+# URP render scale (UniversalRenderPipelineAsset.renderScale).
+# 1.0 = native, 1.5 ≈ 2.25× pixels, 2.0 = 4× pixels (very heavy on GPU).
+# Default 1.5 is a noticeable sharpness bump on most GPUs.
+RenderScale = 1.5
+
+# XR-side supersampling (XRSettings.eyeTextureResolutionScale). Multiplies on top of
+# RenderScale, so leave at 1.0 unless you have GPU headroom — both stack.
+EyeTextureScale = 1.0
+
+# MSAA: 1 = off, 2 = 2×, 4 = 4×, 8 = 8×. URP MSAA. Cheap edge-cleanup vs supersampling.
+MSAA = 4
+
+# Shadow draw distance in meters. Game ships 25m. 60–100m looks better in open spaces.
+ShadowDistance = 60.0
+
+# Main directional light shadowmap resolution. 1024 / 2048 / 4096. Game ships 1024.
+MainShadowResolution = 4096
+
+# Additional (point/spot) shadowmap resolution. Game already ships 4096.
+AdditionalShadowResolution = 4096
+
+# Number of shadow cascades for the main light: 1, 2, or 4. Game ships 4 already.
+ShadowCascades = 4
+
+# URP soft shadow filtering. Game ships true.
+SoftShadows = true
+
+# HDR rendering. Required for proper bloom/tonemap. Game ships true.
+HDR = true
+
+# Force anisotropic filtering on every texture (sharper at oblique angles).
+ForceAnisotropic = true
+
+# Soft particles fade where they intersect geometry instead of hard-clipping.
+SoftParticles = true
+
+# Realtime reflection probe updates. Game ships true.
+RealtimeReflectionProbes = true
+
+# Global LOD bias — distance multiplier before the engine swaps to a lower-detail mesh.
+# Higher = full-detail meshes stay visible further away.
+LODBias = 2.0
 ```
 
 ## How it works (under the hood)

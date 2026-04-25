@@ -33,6 +33,8 @@ namespace LNVR_Tweaks
         private MelonPreferences_Entry<float> _prefSnapTurnAmount;
         private MelonPreferences_Entry<bool> _prefHideHoodDefault;
 
+        private readonly GraphicsModule _graphics = new GraphicsModule();
+
         private bool _rotationNativeSavePushed;
         private bool _hoodDefaultApplied;
         private float _periodicTimer;
@@ -60,6 +62,8 @@ namespace LNVR_Tweaks
 
             _currentChoiceField = typeof(ButtonSelector).GetField("_currentChoice", BindingFlags.NonPublic | BindingFlags.Instance);
 
+            _graphics.Initialize();
+
             MelonLogger.Msg("LNVR Tweaks loaded. The game's Accessibility menu's hood occlusion 'Reduced' choice is relabeled to 'None' and now fully hides the hood.");
         }
 
@@ -72,6 +76,7 @@ namespace LNVR_Tweaks
             PushRotationToNativeSave();
             RelabelAndSyncHoodSelector();
             EnforceLivePlayerState();
+            _graphics.Tick();
         }
 
         // One-shot: write smooth-turn preference into the native Controls.RotationSnap save,
