@@ -3,7 +3,6 @@ using System.Reflection;
 using MelonLoader;
 using UnityEngine;
 using Il2CppBNG;
-using Il2CppFramework.VR.WithDependencies.SOArchitecture.Save;
 using Il2CppLone.Menu;
 using Il2CppTMPro;
 
@@ -13,10 +12,6 @@ namespace LNVR_Tweaks
     {
         private const string HoodMeshPath =
             "AddressableSceneContentLoader/Bootstrap_Addressable (Clone)/Player/PlayerController/CameraRig/TrackingSpace/CenterEyeAnchor/Camera/HoodMesh";
-        private const string RotationSnapSettingPath =
-            "AddressableSceneContentLoader/Bootstrap_Addressable (Clone)/Managers/GameSettings/ContentBasedOnSave/Controls_RotationSnap";
-        private const string HoodSizeSettingPath =
-            "AddressableSceneContentLoader/Bootstrap_Addressable (Clone)/Managers/GameSettings/ContentBasedOnSave/Accessibility_HoodSize";
 
         // The ButtonSelector that drives the "Hood occlusions" UI entry in the game's Accessibility menu.
         private const string HoodSizeSelectorPath =
@@ -35,8 +30,6 @@ namespace LNVR_Tweaks
 
         private readonly GraphicsModule _graphics = new GraphicsModule();
 
-        private bool _rotationNativeSavePushed;
-        private bool _hoodDefaultApplied;
         private float _periodicTimer;
 
         // Reflection cache so we don't pay the lookup every tick.
@@ -52,7 +45,7 @@ namespace LNVR_Tweaks
             _cat.SetFilePath("UserData/LNVR_Tweaks.cfg");
 
             _prefSmoothTurn = _cat.CreateEntry("SmoothTurn", true,
-                description: "Use smooth turning instead of snap turning. Pushed into the game's Controls.RotationSnap save on startup; changing it in the game's Options menu takes precedence until next launch.");
+                description: "Use smooth turning instead of snap turning. Enforced at runtime without writing to the game's save.");
             _prefSmoothTurnSpeed = _cat.CreateEntry("SmoothTurnSpeed", 90f,
                 description: "Smooth turn speed in degrees per second.");
             _prefSnapTurnAmount = _cat.CreateEntry("SnapTurnAmount", 45f,
@@ -64,7 +57,7 @@ namespace LNVR_Tweaks
 
             _graphics.Initialize();
 
-            MelonLogger.Msg("LNVR Tweaks loaded. The game's Accessibility menu's hood occlusion 'Reduced' choice is relabeled to 'None' and now fully hides the hood.");
+            MelonLogger.Msg("LNVR Tweaks loaded. Runtime tweaks are applied without writing to the game's save.");
         }
 
         public override void OnUpdate()
@@ -73,63 +66,18 @@ namespace LNVR_Tweaks
             if (_periodicTimer > 0f) return;
             _periodicTimer = 0.2f;
 
-            PushRotationToNativeSave();
             RelabelAndSyncHoodSelector();
             EnforceLivePlayerState();
             _graphics.Tick();
         }
 
-        // One-shot: write smooth-turn preference into the native Controls.RotationSnap save,
-        // so the game's Controls menu displays the right toggle state.
-        private void PushRotationToNativeSave()
-        {
-            if (_rotationNativeSavePushed) return;
-            var go = GameObject.Find(RotationSnapSettingPath);
-            if (go == null) return;
-            try
-            {
-                var setter = go.GetComponent<SaveSetParam>();
-                if (setter != null)
-                {
-                    setter.SetBool(!_prefSmoothTurn.Value);
-                    setter.Save();
-                    MelonLogger.Msg($"Controls.RotationSnap pushed to save: {!_prefSmoothTurn.Value} ({(_prefSmoothTurn.Value ? "Smooth" : "Snap")}).");
-                }
-            }
-            catch (Exception ex) { MelonLogger.Warning($"Rotation save push failed: {ex.Message}"); }
-            _rotationNativeSavePushed = true;
-        }
-
         // Every tick while the Accessibility menu is mounted:
         //   - Read the ButtonSelector's current choice (mirror it into _lastObservedHoodChoice).
         //   - Override the displayed TMP text so choice 0 reads "None" instead of "Reduced".
-        // Also: if we've never seen the selector yet (user hasn't opened the menu), push our
-        // default once so hood hiding works before the user ever touches the menu.
+        // The mod does not call the game's SaveSetParam/SaveManager path; the configured default
+        // is applied directly to the live HoodMesh until the menu exposes a user choice.
         private void RelabelAndSyncHoodSelector()
         {
-            // Default push: one-shot, only if user hasn't interacted yet.
-            if (!_hoodDefaultApplied)
-            {
-                var hoodSetter = GameObject.Find(HoodSizeSettingPath);
-                if (hoodSetter != null)
-                {
-                    try
-                    {
-                        var setter = hoodSetter.GetComponent<SaveSetParam>();
-                        if (setter != null)
-                        {
-                            var initialChoice = _prefHideHoodDefault.Value ? HiddenChoice : 1;
-                            setter.SetInt(initialChoice);
-                            setter.Save();
-                            _lastObservedHoodChoice = initialChoice;
-                            MelonLogger.Msg($"Accessibility.HoodSize initial default pushed to save: {initialChoice}.");
-                        }
-                    }
-                    catch (Exception ex) { MelonLogger.Warning($"Hood default push failed: {ex.Message}"); }
-                    _hoodDefaultApplied = true;
-                }
-            }
-
             // Menu sync + text relabel (only when the menu is actually mounted).
             var selectorGo = GameObject.Find(HoodSizeSelectorPath);
             if (selectorGo == null) return;
@@ -164,8 +112,8 @@ namespace LNVR_Tweaks
         }
 
         // Enforce rotation mechanic + hood visibility directly on the player every tick.
-        // The native save-change → player-state chain isn't always reliable (timing, chapter
-        // reload, respawn), so belt-and-suspenders: also enforce here.
+        // This intentionally avoids the game's save pipeline; invoking SaveSetParam.Save during
+        // startup can overwrite profile progress before the menu has finished loading profiles.
         private void EnforceLivePlayerState()
         {
             try
