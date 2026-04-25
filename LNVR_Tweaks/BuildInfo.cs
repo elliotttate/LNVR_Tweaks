@@ -9,7 +9,7 @@ namespace LNVR_Tweaks
     public static class BuildInfo
     {
         public const string Name = "LNVR Tweaks";
-        public const string Version = "1.1.1";
+        public const string Version = "1.1.2";
         public const string Author = "elliotttate";
     }
 }
