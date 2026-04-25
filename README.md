@@ -2,6 +2,10 @@
 
 A [MelonLoader](https://github.com/LavaGang/MelonLoader) mod for **Little Nightmares VR: Altered Echoes** that adds a proper way to hide the in-view character hood and forces smooth (non-snap) turning, wired into the game's own Accessibility menu.
 
+| Hood occlusions → **None** | Snap rotation → **Off** |
+| :---: | :---: |
+| ![Hood occlusions set to None](docs/hood-occlusions-none.jpg) | ![Snap rotation set to Off](docs/controls-snap-off.jpg) |
+
 ## What it does
 
 - **Hood occlusion "None"** — adds a fully-hidden state to the existing *Accessibility → Hood occlusions* option. The mod relabels the narrower of the two built-in choices as **"None"** and, when selected, disables the `HoodMesh` that's parented to the VR camera so the top-left of your view isn't covered by a hood silhouette.
