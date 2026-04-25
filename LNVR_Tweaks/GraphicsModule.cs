@@ -51,6 +51,8 @@ namespace LNVR_Tweaks
         private int _lastXrMsaaLevel = -1;
         private XRDisplaySubsystem _cachedDisplay;
 
+        private readonly PostProcessingModule _pp = new PostProcessingModule();
+
         public void Initialize()
         {
             _cat = MelonPreferences.CreateCategory("LNVR_Tweaks_Graphics");
@@ -105,12 +107,18 @@ namespace LNVR_Tweaks
 
             MelonLogger.Msg($"Graphics module initialized — enabled={_enabled.Value}, renderScale={_renderScale.Value}, msaa={_msaa.Value}, shadowDist={_shadowDistance.Value}m, mainShadowRes={_mainShadowResolution.Value}.");
 
+            // PP module shares the same MelonPreferences category and file.
+            _pp.Initialize(_cat);
+
             // CRITICAL: write URP.renderScale and msaaSampleCount NOW, while we're still in the
             // OnInitializeMelon window — before the XR plugin loader starts and creates the
             // swapchain. The swapchain reads these values once during creation. Mutating them
             // mid-session breaks the Meta XR Simulator (and likely other runtimes too) because
             // their swapchain doesn't gracefully resize. So this is one-shot, pre-XR-init only.
             ApplyPreXRInit();
+            // SSAO renderer feature also needs to be added pre-XR-init so the renderer is built
+            // with it from the first frame.
+            _pp.ApplyPreXRInit();
         }
 
         private void ApplyPreXRInit()
@@ -170,6 +178,7 @@ namespace LNVR_Tweaks
                 // ApplyPreXRInit() which runs before the XR session is created.
                 ApplyURP();
                 ApplyQualitySettings();
+                _pp.Tick();
             }
             catch (Exception ex)
             {

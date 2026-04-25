@@ -11,6 +11,7 @@ A [MelonLoader](https://github.com/LavaGang/MelonLoader) mod for **Little Nightm
 - **Hood occlusion "None"** — adds a fully-hidden state to the existing *Accessibility → Hood occlusions* option. The mod relabels the narrower of the two built-in choices as **"None"** and, when selected, disables the `HoodMesh` that's parented to the VR camera so the top-left of your view isn't covered by a hood silhouette.
 - **Smooth turning by default** — directly enforces `BNG.PlayerRotation.RotationType = Smooth` every ~0.2s so the player controller can't drift back to snap turning on chapter/respawn events. The mod no longer writes this into the game's native save.
 - **Cranked graphics** *(v1.1)* — enables supersampling, MSAA, longer shadow draw distance, 4096 main-light shadowmap, anisotropic filtering, soft particles, and higher LOD bias by overriding the URP asset, Unity QualitySettings, and XR settings at runtime. Disabled with one config flag if you want stock visuals.
+- **SSAO + post-processing knobs** *(v1.1.2)* — adds Screen-Space Ambient Occlusion (URP renderer feature, off by default in stock game) and gives you overrides for Bloom, Vignette, Chromatic Aberration, and Film Grain via a high-priority global volume. Defaults turn CA and Grain off (they hurt clarity in VR) and leave Bloom/Vignette stock unless you opt in.
 - **Configurable smooth-turn speed and snap amount** — tweak speed and snap-step degrees via the config file.
 - **Uses the game's own menu for hood state** — the *Accessibility → Hood occlusions* selector is relabeled in-place, and the mod mirrors that menu choice at runtime without writing to the game's native save.
 
@@ -106,6 +107,43 @@ RealtimeReflectionProbes = true
 # Global LOD bias — distance multiplier before the engine swaps to a lower-detail mesh.
 # Higher = full-detail meshes stay visible further away.
 LODBias = 2.0
+
+# --- SSAO + post-processing (v1.1.2) ---
+
+# Screen-Space Ambient Occlusion. Adds shadow contact-darkening in creases. Game ships
+# without SSAO. Added as a URP renderer feature during OnInitializeMelon (before the XR
+# swapchain is built), so toggling this requires a relaunch.
+SSAOEnabled = true
+SSAOIntensity = 1.0          # 0–4. URP default ~1.0.
+SSAORadius = 0.35            # world-space metres, 0.05–1.0. Lower = tighter AO.
+SSAOFalloff = 100.0          # distance at which SSAO fades out.
+SSAODirectLightingStrength = 0.25  # 0–1. How much SSAO darkens directly-lit pixels.
+SSAOSampleCount = 12         # 4–32. Higher = smoother, more GPU.
+SSAONormalQuality = 2        # 0=Low, 1=Medium, 2=High.
+SSAODownsample = false       # render SSAO at half-res (cheaper, blurrier).
+SSAOAfterOpaque = false
+
+# Bloom override (off by default — leave the scene's bloom alone).
+BloomOverride = false
+BloomIntensity = 0.6
+BloomThreshold = 0.9
+BloomScatter = 0.7
+BloomHighQuality = true
+
+# Vignette override (off by default).
+VignetteOverride = false
+VignetteIntensity = 0.0
+
+# Chromatic aberration. ON by default with intensity 0 — i.e. the mod forces CA OFF
+# (it causes coloured fringing in VR). Set ChromaticAberrationOverride=false to let
+# the scene's CA play through.
+ChromaticAberrationOverride = true
+ChromaticAberrationIntensity = 0.0
+
+# Film grain. ON by default with intensity 0 — i.e. the mod forces grain OFF
+# (it kills fine-detail clarity in VR). Set FilmGrainOverride=false to leave it alone.
+FilmGrainOverride = true
+FilmGrainIntensity = 0.0
 ```
 
 ## How it works (under the hood)
