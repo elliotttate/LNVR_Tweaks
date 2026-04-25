@@ -66,12 +66,20 @@
       <HintPath>$(Il2CppAssemblies)\UnityEngine.XRModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="UnityEngine.SubsystemsModule">
+      <HintPath>$(Il2CppAssemblies)\UnityEngine.SubsystemsModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="Unity.RenderPipelines.Core.Runtime">
       <HintPath>$(Il2CppAssemblies)\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Unity.RenderPipelines.Universal.Runtime">
       <HintPath>$(Il2CppAssemblies)\Unity.RenderPipelines.Universal.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.XR.Management">
+      <HintPath>$(Il2CppAssemblies)\Unity.XR.Management.dll</HintPath>
       <Private>false</Private>
     </Reference>
 
